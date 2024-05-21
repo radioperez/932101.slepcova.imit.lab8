@@ -4,5 +4,5 @@
 8.3 Сбор статистики вероятностей
 9 Моделирование с оценкой методом хи-квадрат
 ![alt text](image.png)
-![alt text](image-2.png)
 ![alt text](image-1.png)
+![alt text](image-2.png)

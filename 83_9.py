@@ -40,11 +40,11 @@ class MainWindow(QMainWindow):
         self.remainder_probability_label = QLabel("Остаточная вероятность: ")
         settings.addWidget(self.remainder_probability_label)
 
-        # mean and standard deviation
+        # mean and variance
         self.mean_label = QLabel("Выборочное среднее: ")
         settings.addWidget(self.mean_label)
-        self.stdev_label = QLabel("Выборочная дисперсия: ")
-        settings.addWidget(self.stdev_label)
+        self.var_label = QLabel("Выборочная дисперсия: ")
+        settings.addWidget(self.var_label)
 
         # chi squared
         self.chi_label = QLabel("Критерий хи-квадрат: ")
@@ -129,10 +129,10 @@ class MainWindow(QMainWindow):
         MEAN_ERROR = np.abs((MEAN - EMP_MEAN) / MEAN)
         self.mean_label.setText(f"Выборочное среднее: {EMP_MEAN:.2f}, погрешность {MEAN_ERROR:.2f}")
 
-        ST_DEV = np.abs(sum(p*x**2 for x,p in enumerate(THEORY, 1)) - MEAN)
-        EMP_DEV = np.abs(sum(p*x**2 for x,p in enumerate(DATA, 1)) - EMP_MEAN)
-        DEV_ERROR = np.abs((ST_DEV - EMP_DEV) / ST_DEV)
-        self.stdev_label.setText(f"Выборочная дисперсия: {EMP_DEV:.2f}, погрешность {DEV_ERROR:.2f}")
+        VARIANCE = sum(p*(x - MEAN)**2 for x,p in enumerate(THEORY, 1))
+        EMP_VARIANCE = sum(p*(x - EMP_MEAN)**2 for x,p in enumerate(DATA, 1))
+        VAR_ERROR = np.abs((VARIANCE - EMP_VARIANCE) / VARIANCE)
+        self.var_label.setText(f"Выборочная дисперсия: {EMP_VARIANCE:.2f}, погрешность {VAR_ERROR:.2f}")
     
     def chisq(self, DATA, THEORY, N_TRIALS):
         CHI = sum((observed - expected)**2 / expected for observed,expected in zip(DATA, THEORY))
