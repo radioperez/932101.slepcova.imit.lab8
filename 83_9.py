@@ -1,6 +1,7 @@
 import sys
 import random
 import numpy as np
+import scipy.stats
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtWidgets import (
     QApplication,
@@ -38,6 +39,16 @@ class MainWindow(QMainWindow):
         # remainder probability
         self.remainder_probability_label = QLabel("Остаточная вероятность: ")
         settings.addWidget(self.remainder_probability_label)
+
+        # mean and standard deviation
+        self.mean_label = QLabel("Выборочное среднее: ")
+        settings.addWidget(self.mean_label)
+        self.stdev_label = QLabel("Выборочная дисперсия: ")
+        settings.addWidget(self.stdev_label)
+
+        # chi squared
+        self.chi_label = QLabel("Критерий хи-квадрат: ")
+        settings.addWidget(self.chi_label)
 
         # add button
         add_event_button = QPushButton("Добавить событие")
@@ -106,15 +117,36 @@ class MainWindow(QMainWindow):
         # generate numbers and collect statistics
         RESULT = random.choices(population = BINS, weights = PROBABILITIES, k = N_TRIALS)
         STATISTICS, _ = np.histogram(RESULT, range = (1, len(BINS)), bins = len(BINS))
-        FREQUENCY = [stat/N_TRIALS for stat in STATISTICS]
-        print(BINS, FREQUENCY)
-        self.draw(BINS, FREQUENCY)
+        FREQUENCIES = [stat/N_TRIALS for stat in STATISTICS]
+        print(BINS, FREQUENCIES)
+        self.calc(FREQUENCIES, PROBABILITIES, N_TRIALS)
+        self.chisq(FREQUENCIES, PROBABILITIES, N_TRIALS)
+        self.draw(BINS, FREQUENCIES)
+
+    def calc(self, DATA, THEORY, N_TRIALS):
+        MEAN = sum(x*p for x,p in enumerate(THEORY, 1))
+        EMP_MEAN = sum(x*p for x,p in enumerate(DATA, 1))
+        MEAN_ERROR = np.abs((MEAN - EMP_MEAN) / MEAN)
+        self.mean_label.setText(f"Выборочное среднее: {EMP_MEAN:.2f}, погрешность {MEAN_ERROR:.2f}")
+
+        ST_DEV = np.abs(sum(p*x**2 for x,p in enumerate(THEORY, 1)) - MEAN)
+        EMP_DEV = np.abs(sum(p*x**2 for x,p in enumerate(DATA, 1)) - EMP_MEAN)
+        DEV_ERROR = np.abs((ST_DEV - EMP_DEV) / ST_DEV)
+        self.stdev_label.setText(f"Выборочная дисперсия: {EMP_DEV:.2f}, погрешность {DEV_ERROR:.2f}")
+    
+    def chisq(self, DATA, THEORY, N_TRIALS):
+        CHI = sum((observed - expected)**2 / expected for observed,expected in zip(DATA, THEORY))
+        CHI_CRITICAL = scipy.stats.chi2.ppf(1-0.01, df = len(DATA)-1)
+        
+        self.chi_label.setText(f"Критерий хи-квадрат: {CHI:.2f} {">" if CHI > CHI_CRITICAL else "<="} {CHI_CRITICAL:.2f}")
+
+
     def draw(self, x, y):
         self.graph.clear()
         hist = QtGraph.BarGraphItem(x = x, height = y, width = 0.9, brush='b')
         self.graph.addItem(hist)
         for index, _ in enumerate(x):
-            text = QtGraph.TextItem(f'{y[index]}', color='b')
+            text = QtGraph.TextItem(f'{y[index]:.4f}', color='b')
             text.setPos(x[index],y[index]+0.05)
             self.graph.addItem(text)
     def ping(self):
